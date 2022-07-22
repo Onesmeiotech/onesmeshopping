@@ -92,6 +92,157 @@ else{
 		<!-- panel-body  -->
 	    <div class="panel-body">
 	    <form name="payment" method="post" action="test.php">
+		<?php 
+session_start();
+error_reporting(0);
+include('includes/config.php');
+if(isset($_POST['submit'])){
+		if(!empty($_SESSION['cart'])){
+		foreach($_POST['quantity'] as $key => $val){
+			if($val==0){
+				unset($_SESSION['cart'][$key]);
+			}else{
+				$_SESSION['cart'][$key]['quantity']=$val;
+
+			}
+		}
+			echo "<script>alert('Your Cart hasbeen Updated');</script>";
+		}
+	}
+// Code for Remove a Product from Cart
+if(isset($_POST['remove_code']))
+	{
+
+if(!empty($_SESSION['cart'])){
+		foreach($_POST['remove_code'] as $key){
+			
+				unset($_SESSION['cart'][$key]);
+		}
+			echo "<script>alert('Your Cart has been Updated');</script>";
+	}
+}
+// code for insert product in order table
+
+
+if(isset($_POST['ordersubmit'])) 
+{
+	
+if(strlen($_SESSION['login'])==0)
+    {   
+header('location:login.php');
+}
+else{
+
+	$quantity=$_POST['quantity'];
+	$pdd=$_SESSION['pid'];
+	$value=array_combine($pdd,$quantity);
+
+		foreach($value as $qty=> $val34){
+
+mysqli_query($con,"insert into orders(userId,productId,quantity) values('".$_SESSION['id']."','$qty','$val34')");
+header('location:bill-ship-addresses2.php');
+}
+}
+}
+?>
+
+<form name="cart" method="post">	
+<?php
+if(!empty($_SESSION['cart'])){
+	?>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th class="cart-description item">Image</th>
+					<th class="cart-product-name item">Product Name</th>
+			
+					<th class="cart-qty item">Quantity</th>
+					<th class="cart-total last-item">Grandtotal</th>
+				</tr>
+			</thead><!-- /thead -->
+			<tfoot>
+				
+			</tfoot>
+			<tbody>
+ <?php
+ $pdtid=array();
+    $sql = "SELECT * FROM products WHERE id IN(";
+			foreach($_SESSION['cart'] as $id => $value){
+			$sql .=$id. ",";
+			}
+			$sql=substr($sql,0,-1) . ") ORDER BY id ASC";
+			$query = mysqli_query($con,$sql);
+			$totalprice=0;
+			$totalqunty=0;
+			if(!empty($query)){
+			while($row = mysqli_fetch_array($query)){
+				$quantity=$_SESSION['cart'][$row['id']]['quantity'];
+				$subtotal= $_SESSION['cart'][$row['id']]['quantity']*$row['productPrice']+$row['shippingCharge'];
+				$totalprice += $subtotal;
+				$_SESSION['qnty']=$totalqunty+=$quantity;
+
+				array_push($pdtid,$row['id']);
+//print_r($_SESSION['pid'])=$pdtid;exit;
+	?>
+
+				<tr>
+					<td class="cart-image">
+						<a class="entry-thumbnail" href="detail.html">
+						    <img src="admin/productimages/<?php echo $row['id'];?>/<?php echo $row['productImage1'];?>" alt="" width="114" height="146">
+						</a>
+					</td>
+					<td class="cart-product-name-info">
+						<h4 class='cart-product-description'><a href="product-details.php?pid=<?php echo htmlentities($pd=$row['id']);?>" ><?php echo $row['productName'];
+
+$_SESSION['sid']=$pd;
+						 ?></a></h4>
+						<div class="row">
+							<div class="col-sm-4">
+								<div class="rating rateit-small"></div>
+							</div>
+							<div class="col-sm-8">
+<?php $rt=mysqli_query($con,"select * from productreviews where productId='$pd'");
+$num=mysqli_num_rows($rt);
+{
+?>
+								<div class="reviews">
+									( <?php echo htmlentities($num);?> Reviews )
+								</div>
+								<?php } ?>
+							</div>
+						</div><!-- /.row -->
+						
+					</td>
+					<td class="cart-product-quantity">
+						<div class="quant-input">
+				                <div class="arrows">
+				                  <div class="arrow plus gradient"><span class="ir"><i class="icon fa fa-sort-asc"></i></span></div>
+				                  <div class="arrow minus gradient"><span class="ir"><i class="icon fa fa-sort-desc"></i></span></div>
+				                </div>
+				             <input type="text" value="<?php echo $_SESSION['cart'][$row['id']]['quantity']; ?>" name="quantity[<?php echo $row['id']; ?>]">
+				             
+			              </div>
+		            </td>
+					
+
+					<td class="cart-product-grand-total"><span class="cart-grand-total-price"><?php echo ($_SESSION['cart'][$row['id']]['quantity']*$row['productPrice']+$row['shippingCharge']); ?>.00</span></td>
+				</tr>
+				<?php } }
+$_SESSION['pid']=$pdtid;
+				?>
+			</tbody><!-- /tbody -->
+		</table><!-- /table -->
+		
+	</div>
+
+</div>
+<div class="col-md-4 col-sm-12 cart-shopping-total">
+	
+	<?php } else {
+echo "Your shopping Cart is empty";
+		}?>
+</div> 
+		</form>
 	    <input type="radio" name="paymethod" value="MTN" checked="checked"> MTN-MOMO-PAY
 	    <!-- <input type="radio" name="paymethod" value="Internet Banking"> Internet Banking
 	     <input type="radio" name="paymethod" value="Debit / Credit card"> Debit / Credit card <br /><br />----->
@@ -151,7 +302,8 @@ else{
 			</div><!-- /.row -->
 		</div><!-- /.checkout-box -->
 		<!-- ============================================== BRANDS CAROUSEL ============================================== -->
-<?php echo include('includes/brands-slider.php');?>
+
+
 <!-- ============================================== BRANDS CAROUSEL : END ============================================== -->	</div><!-- /.container -->
 </div><!-- /.body-content -->
 <?php include('includes/footer.php');?>
